@@ -1,6 +1,6 @@
 # IntelliScript
 
-### Your data, in your own hands, powered by AI
+### Your data, in your own hands, powered by Meta Llama-3 8B Model
 
 Web site: https://intelliscript.carelweb.org/
 
