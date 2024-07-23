@@ -9,6 +9,9 @@ import os
 import random
 from report_type_variables import *
 
+device = "cuda"  # the device to load the model onto
+model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
+
 keyword_vectorstore = 'vectorstore/keywords-store/keywords-vectorstore'
 data_seperate_1000_vectorstore = 'vectorstore/data-stores/all-data-vectorstore'
 data_combined_4000_vectorstore = 'vectorstore/data-stores/data-combined-4000'
@@ -70,9 +73,7 @@ def get_keywords(text):
     return ' '.join(keywords)
 
 
-device = "cuda"  # the device to load the model onto
-model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
-qwen_model = AutoModelForCausalLM.from_pretrained(
+llama_model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype=torch.float16,
     device_map="auto",
@@ -83,11 +84,11 @@ qwen_model = AutoModelForCausalLM.from_pretrained(
     ),
 )
 
-qwen_tokenizer = AutoTokenizer.from_pretrained(model_name)
+llama_tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 
 def get_num_tokens(text_chunk):
-    tokenized_text = qwen_tokenizer(text_chunk, return_tensors='pt')
+    tokenized_text = llama_tokenizer(text_chunk, return_tensors='pt')
     num_tokens = tokenized_text['input_ids'].shape[1]
     return num_tokens
 
@@ -108,19 +109,19 @@ def split_and_combine_text(text, seperator, chunk_size):
     return chunks
 
 
-def qwen_response(system_prompt, user_promt, temp, context_len):
+def llama_response(system_prompt, user_promt, temp, context_len):
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_promt}
     ]
-    text = qwen_tokenizer.apply_chat_template(
+    text = llama_tokenizer.apply_chat_template(
         messages,
         tokenize=False,
         add_generation_prompt=True
     )
-    model_inputs = qwen_tokenizer([text], return_tensors="pt").to(device)
+    model_inputs = llama_tokenizer([text], return_tensors="pt").to(device)
 
-    generated_ids = qwen_model.generate(
+    generated_ids = llama_model.generate(
         model_inputs.input_ids,
         max_new_tokens=context_len,
         temperature=temp,
@@ -132,7 +133,7 @@ def qwen_response(system_prompt, user_promt, temp, context_len):
         output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
     ]
 
-    response = qwen_tokenizer.batch_decode(
+    response = llama_tokenizer.batch_decode(
         generated_ids, skip_special_tokens=True)[0]
 
     return response
@@ -169,7 +170,7 @@ def qna_response_generator(query, temp, context_len):
         full_context += f'\n<chunk sep>\nsource: {metadata_write}\n\n{dm.page_content}\n\n\n'
 
     user_promt = f'{query_prompt_qna}\n\n\nCONTEXT: {full_context}\n\n\nQUERY: {query}'
-    return qwen_response(system_prompt_qna, user_promt, temp, context_len), match_metadata
+    return llama_response(system_prompt_qna, user_promt, temp, context_len), match_metadata
 
 
 def report_generator(years_list, topics_list, temp, context_len):
@@ -213,15 +214,15 @@ def report_generator(years_list, topics_list, temp, context_len):
 
     for sch in splitted_chunks:
         user_content = f'CONTEXT: {sch}\n\n\n\nQUERY: {query}'
-        extracted_data_output = qwen_response(
+        extracted_data_output = llama_response(
             system_prompt_extract_data, f'{query_prompt_extract_data}\n\n\n{user_content}', temp, context_len)
         collected_data += extracted_data_output
         collected_data += '\n\n\n'
 
     report_gen_query = query_prompt_report_gen + \
         f"CONTEXT: {collected_data}"
-    report_output = qwen_response(system_prompt_report_gen,
-                                  report_gen_query, temp=0.8, context_len=2000)
+    report_output = llama_response(system_prompt_report_gen,
+                                   report_gen_query, temp=0.8, context_len=2000)
 
     return report_output, match_metadata
 
@@ -466,15 +467,15 @@ def insight_generator(user_query, temp, context_len):
 
     for sch in splitted_chunks:
         user_content = f'CONTEXT: {sch}\n\n\n\nQUERY: {query}'
-        extracted_data_output = qwen_response(
+        extracted_data_output = llama_response(
             system_prompt_insight_extract, f'{query_prompt_insight_extract}\n\n\n{user_content}', temp, context_len)
         collected_data += extracted_data_output
         collected_data += '\n\n\n'
 
     insight_gen_query = query_prompt_insight_gen + \
         f"CONTEXT: {collected_data}\n\n\nTOPIC: {user_query}"
-    insight_output = qwen_response(system_prompt_insight_gen,
-                                   insight_gen_query, temp=0.8, context_len=1000)
+    insight_output = llama_response(system_prompt_insight_gen,
+                                    insight_gen_query, temp=0.8, context_len=1000)
 
     output_json = {
         "type": "paragraph",
