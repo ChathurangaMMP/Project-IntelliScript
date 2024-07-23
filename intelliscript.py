@@ -8,6 +8,10 @@ import json
 import os
 import random
 from report_type_variables import *
+from huggingface_hub import login
+
+hf_token = ''
+login(hf_token)  # Replace with HF read token
 
 device = "cuda"  # the device to load the model onto
 model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
