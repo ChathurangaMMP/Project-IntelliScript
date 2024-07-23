@@ -17,6 +17,7 @@ Financial_System_Stability = ['capital adequacy ratio',
                               'Licensed Finance Companies',
                               'Specialised Leasing Companies',
                               'Financial Market Infrastructure']
+
 acts_laws = ["Central Bank of Sri Lanka Act",
              "Monetary Law Act",
              "Banking (Special Provisions) Act",

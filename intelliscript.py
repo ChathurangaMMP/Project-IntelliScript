@@ -140,9 +140,9 @@ def llama_response(system_prompt, user_promt, temp, context_len):
 
 
 def qna_response_generator(query, temp, context_len):
-    kk = 5
-    kb1 = 3
-    kb2 = 4
+    kk = 3
+    kb1 = 2
+    kb2 = 2
 
     keyword_matches = retriever(kw_kbase, get_keywords(query), kk)
     full_context = ""
@@ -175,7 +175,7 @@ def qna_response_generator(query, temp, context_len):
 
 def report_generator(years_list, topics_list, temp, context_len):
     kk = 1
-    kb = 50
+    kb = 20
     matched_count = 0
     full_context = ""
     match_metadata = {"keywords": [], "kbase": []}
@@ -428,7 +428,7 @@ def generate_final_report(query, temp, context_len):
 
 def insight_generator(user_query, temp, context_len):
     kk = 2
-    kb = 50
+    kb = 10
     matched_count = 0
     full_context = ""
     match_metadata = {"keywords": [], "kbase": []}
