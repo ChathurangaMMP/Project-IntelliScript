@@ -30,4 +30,5 @@ Embedding Model: **_sentence-transformers/all-MiniLM-L6-v2_**
 ---
 
 [app.py](app.py) - handle the API endpoint functionalities
+
 [intelliscript.py](intelliscript.py) - handle the main functionality of the application
